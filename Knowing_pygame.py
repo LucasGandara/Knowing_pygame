@@ -14,6 +14,13 @@ char = pygame.image.load(path.join('Sprites', 'standing.png'))
 
 score = pygame.font.SysFont('Arial', 30, True)
 
+# Cargamos los efectos de sonido
+BulletSound = pygame.mixer.Sound(path.join('Sprites','bullet.wav'))
+HitSound    = pygame.mixer.Sound(path.join('Sprites','hit.wav'))
+
+Music = pygame.mixer.music.load(path.join('Sprites','music.mp3'))
+pygame.mixer.music.play(-1)
+
 # Clock speed
 clock = pygame.time.Clock()
 
@@ -64,7 +71,28 @@ class Player(object):
         # Se dibuja la hitbox
         #pygame.draw.rect(win, (255, 0, 255), self.hitbox, 1)
 
-            #win.blit(char, (self.x,self.y))
+        #win.blit(char, (self.x,self.y))
+
+    def hit(self):
+        self.x = 60
+        self.y = 410
+        self.walkCount = 0
+
+        font1 = pygame.font.SysFont('comicsans', 100)
+        text  = font1.render('-5', 1, (255, 0, 0))
+        win.blit(text, (250 - (text.get_width()/2), 200))
+        pygame.display.update()
+        i = 0
+        while i < 300:
+            pygame.time.delay(10)
+            i += 1
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    i = 301
+                    pygame.quit()
+        
+        
 
 class Projectile(object):
     def __init__(self, x, y, radius, color, facing):
@@ -81,6 +109,7 @@ class Projectile(object):
         pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)    
 
 class Enemy(object):
+
     walkRight = [pygame.image.load(path.join('Sprites','R1E.png')), pygame.image.load(path.join('Sprites','R2E.png')), pygame.image.load(path.join('Sprites','R3E.png')),
                  pygame.image.load(path.join('Sprites','R4E.png')), pygame.image.load(path.join('Sprites','R5E.png')), pygame.image.load(path.join('Sprites','R6E.png')),
                  pygame.image.load(path.join('Sprites','R7E.png')), pygame.image.load(path.join('Sprites','R8E.png')), pygame.image.load(path.join('Sprites','R9E.png')),
@@ -184,6 +213,12 @@ run = True
 while run:
     clock.tick(27)
     
+    if man1.hitbox[1] < enemy1.hitbox[1] + enemy1.hitbox[3] and man1.hitbox[1] + man1.hitbox[1] + man1.hitbox[3] > enemy1.hitbox[1]:
+        if man1.hitbox[0] + man1.hitbox[2] > enemy1.hitbox[0] and man1.hitbox[0] < enemy1.hitbox[0] + enemy1.hitbox[2]:
+            man1.hit()
+            man1.score -= 5
+
+
     if bulletavailable == False:
         bulletcooldown -= 1
         bulletavailable = True if bulletcooldown == 0 else False
@@ -197,7 +232,8 @@ while run:
             if bullet.x + bullet.radius > enemy1.hitbox[0] and bullet.x - bullet.radius < enemy1.hitbox[0] + enemy1.hitbox[2]:
                 enemy1.hit()
                 bullets.pop(x)
-                man1.score += 1
+                HitSound.play()
+                man1.score += 1                          
         
         if bullet.x < 500 and bullet.x > 0:
             bullet.x += bullet.vel
@@ -208,6 +244,7 @@ while run:
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_SPACE] and bulletavailable:
+        BulletSound.play()
         bulletcooldown = 4
         facing = 1 if man1.right else -1           
         if len(bullets) < 5:
