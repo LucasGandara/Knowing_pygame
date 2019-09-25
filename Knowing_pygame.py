@@ -12,6 +12,8 @@ bg = pygame.image.load(path.join('Sprites','bg.jpg'))
 
 char = pygame.image.load(path.join('Sprites', 'standing.png'))
 
+score = pygame.font.SysFont('Arial', 30, True)
+
 # Clock speed
 clock = pygame.time.Clock()
 
@@ -28,20 +30,19 @@ class Player(object):
         self.right = False
         self.walkCount = 0
         self.standing = False
-        self.hitbox = (self.x + 20, self.y + 10, 28, 55) 
+        self.hitbox = (self.x + 20, self.y + 10, 28, 55)
+        self.score = 0 
 
         # Cargamos las imagenes que utuilizaremos como sprites
         self.walkRight = [pygame.image.load(path.join('Sprites','R1.png')), pygame.image.load(path.join('Sprites','R2.png')), pygame.image.load(path.join('Sprites','R3.png')),
-                      pygame.image.load(path.join('Sprites','R4.png')), pygame.image.load(path.join('Sprites','R5.png')), pygame.image.load(path.join('Sprites','R6.png')),
-                      pygame.image.load(path.join('Sprites','R7.png')), pygame.image.load(path.join('Sprites','R8.png')), pygame.image.load(path.join('Sprites','R9.png'))]
+                          pygame.image.load(path.join('Sprites','R4.png')), pygame.image.load(path.join('Sprites','R5.png')), pygame.image.load(path.join('Sprites','R6.png')),
+                          pygame.image.load(path.join('Sprites','R7.png')), pygame.image.load(path.join('Sprites','R8.png')), pygame.image.load(path.join('Sprites','R9.png'))]
 
         self.walkLeft =  [pygame.image.load(path.join('Sprites','L1.png')), pygame.image.load(path.join('Sprites','L2.png')), pygame.image.load(path.join('Sprites','L3.png')),
-                      pygame.image.load(path.join('Sprites','L4.png')), pygame.image.load(path.join('Sprites','L5.png')), pygame.image.load(path.join('Sprites','L6.png')),
-                      pygame.image.load(path.join('Sprites','L7.png')), pygame.image.load(path.join('Sprites','L8.png')), pygame.image.load(path.join('Sprites','L9.png'))]
+                          pygame.image.load(path.join('Sprites','L4.png')), pygame.image.load(path.join('Sprites','L5.png')), pygame.image.load(path.join('Sprites','L6.png')),
+                          pygame.image.load(path.join('Sprites','L7.png')), pygame.image.load(path.join('Sprites','L8.png')), pygame.image.load(path.join('Sprites','L9.png'))]
 
-    def draw(self, win):
-        
-        
+    def draw(self, win):        
         # Dibujamos los sprites
         if self.walkCount + 1 >= 27:
             man1.walkCount = 0
@@ -58,8 +59,10 @@ class Player(object):
                 win.blit(self.walkRight[0], (self.x, self.y))
             else:
                 win.blit(self.walkLeft[0], (self.x, self.y))
+
         self.hitbox = (self.x + 20, self.y + 10, 28, 55)        
-        pygame.draw.rect(win, (255, 0, 255), self.hitbox, 1)
+        # Se dibuja la hitbox
+        #pygame.draw.rect(win, (255, 0, 255), self.hitbox, 1)
 
             #win.blit(char, (self.x,self.y))
 
@@ -75,7 +78,7 @@ class Projectile(object):
 
     def draw(self,win):
         # ASi se dibuja un circulo en pygame:
-        pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)
+        pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)    
 
 class Enemy(object):
     walkRight = [pygame.image.load(path.join('Sprites','R1E.png')), pygame.image.load(path.join('Sprites','R2E.png')), pygame.image.load(path.join('Sprites','R3E.png')),
@@ -97,22 +100,32 @@ class Enemy(object):
         self.walkCount = 0
         self.vel = 3
         self.hitbox = (self.x + 17, self.y + 2, 31, 57)
+        self.health = 10
+        self.visible = True
 
     def draw(self, win):
 
         self.move()
-        if self.walkCount + 1 >= 33:
-            self.walkCount = 0
-        
-        if self.vel > 0:
-            win.blit(self.walkRight[self.walkCount//3], (self.x, self.y))
-            self.walkCount += 1
-        else:
-            win.blit(self.walkLeft[self.walkCount//3], (self.x, self.y))
-            self.walkCount += 1
-        
-        self.hitbox = (self.x + 17, self.y + 2, 31, 57)  
-        pygame.draw.rect(win, (255, 0, 0), self.hitbox , 1)
+
+        if self.visible == True:
+
+            if self.walkCount + 1 >= 33:
+                self.walkCount = 0
+            
+            if self.vel > 0:
+                win.blit(self.walkRight[self.walkCount//3], (self.x, self.y))
+                self.walkCount += 1
+            else:
+                win.blit(self.walkLeft[self.walkCount//3], (self.x, self.y))
+                self.walkCount += 1           
+
+            pygame.draw.rect(win,  (0, 255,0), (self.hitbox[0], self.hitbox[1] - 20, 50 , 10))
+            if self.health < 10:
+                pygame.draw.rect(win,  (255, 0, 0), ( self.hitbox[0] + 50 - (5 * (10 - self.health)), self.hitbox[1] - 20,  5 * (10 - self.health) , 10))            
+
+            self.hitbox = (self.x + 17, self.y + 2, 31, 57)
+            # Dibujar la hitbox
+            #pygame.draw.rect(win, (255, 0, 0), self.hitbox , 1)
 
     def move(self):
         if self.vel > 0:
@@ -133,13 +146,19 @@ class Enemy(object):
                 self.walkCount = 0
 
     def hit(self):
-        print("hit")
+        self.health -= 1 if self.health > 0 else self.health
+        if self.health == 0:
+            self.visible = False
+
+        print("hit, healt: %d" % self.health)
 
 def redrawGameWindow():
     # Para poder mostrarlo se hacer un refresco a la pantalla
     win.blit(bg, (0,0)) # Colocamos la imagen bg de fondo 
     man1.draw(win) 
     enemy1.draw(win)
+
+    win.blit(score.render("Score: %d" % man1.score, True, (255, 0, 0)), (10,10))
 
     for bullet in bullets:
         bullet.draw(win)
@@ -157,6 +176,8 @@ enemy1 = Enemy(100, 420, 64, 64, 200)
 bullets = []
 bulletavailable = True
 bulletcooldown = 4
+
+
 
 # This is the main loop 
 run = True
@@ -176,6 +197,7 @@ while run:
             if bullet.x + bullet.radius > enemy1.hitbox[0] and bullet.x - bullet.radius < enemy1.hitbox[0] + enemy1.hitbox[2]:
                 enemy1.hit()
                 bullets.pop(x)
+                man1.score += 1
         
         if bullet.x < 500 and bullet.x > 0:
             bullet.x += bullet.vel
